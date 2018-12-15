@@ -14,10 +14,10 @@ MonoBehaviour:
   id: CrackboxModule
   title: Crackbox
   description: "Tetris?... Again?!\n\r\nIdeas by: Pruz\nCreated and impelemented by:
-    Marksam32\r\nTwitch plays is supported.\r\n\r\nManual:\r\nPDF: https://github.com/marksam32/ktaneCrackbox/blob/master/Manual/pdfs/Modules/Crackbox%20%E2%80%94%20Keep%20Talking%20and%20Nobody%20Explodes%20Module.pdf\nHTML:
-    (comming soon)\n\r\nModule id: CrackboxModule\nGithub: https://github.com/marksam32/ktaneCrackbox\n\r\nIf
-    you want to report any bugs or typos in the manual or in the module, please contact
-    me on discord: Marksam32#2748\r"
+    Marksam32\r\nTwitch plays is supported.\r\n\r\nManual:\r\nPDF: https:https://ktane.timwi.de/PDF/Crackbox.pdf\nHTML:
+    https://ktane.timwi.de/HTML/Crackbox.html\n\r\nModule id: CrackboxModule\nGithub:
+    https://github.com/marksam32/ktaneCrackbox\n\r\nIf you want to report any bugs
+    or typos in the manual or in the module, please contact me on discord: Marksam32#2748\r"
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: fb8146af761d24c40a8b25a281a079d1, type: 3}
