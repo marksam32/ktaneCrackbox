@@ -28,7 +28,7 @@ public class CrackboxScript : MonoBehaviour
     private static readonly Regex SetRegEx = new Regex("^set ([1-9]|10)$");
     private static readonly Regex MoveRegEx = new Regex("^move ([u|d|l|r]+)$");
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = "To move the selected box, do: !{0} move ullr to move it up, left, left, and right. To set a number, do: set #. To submit an answer do: !{0} check.";
+    private readonly string TwitchHelpMessage = "To move the selected box, do: !{0} move ullr to move it up, left, left, and right. To set a number, do: !{0} set #. To submit an answer do: !{0} check.";
     #pragma warning restore 414
 
     private int currentlySelectedItem;
