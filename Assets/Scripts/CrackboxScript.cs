@@ -1,10 +1,9 @@
-﻿using UnityEngine;
-using Crackbox;
-using System;
+﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Crackbox;
+using UnityEngine;
 
 public class CrackboxScript : MonoBehaviour
 {
@@ -27,9 +26,6 @@ public class CrackboxScript : MonoBehaviour
     private bool isSolved = false;
     private static readonly Regex SetRegEx = new Regex("^set ([1-9]|10)$");
     private static readonly Regex MoveRegEx = new Regex("^move ([u|d|l|r]+)$");
-    #pragma warning disable 414
-    private readonly string TwitchHelpMessage = "To move the selected box, do: !{0} move ullr to move it up, left, left, and right. To set a number, do: !{0} set #. To submit an answer do: !{0} check.";
-    #pragma warning restore 414
 
     private int currentlySelectedItem;
     private bool interactable = true;
@@ -38,11 +34,11 @@ public class CrackboxScript : MonoBehaviour
     private CrackboxGridItem[] originalGridItems;
 
     // Use this for initialization
-    void Start ()
+    void Start()
     {
         _moduleId = _moduleIdCounter++;
         Module.OnActivate += Activate;
-	}
+    }
 
     void Activate()
     {
@@ -66,7 +62,7 @@ public class CrackboxScript : MonoBehaviour
         }
 
         for (int i = 0; i < 10; i++)
-        {           
+        {
             int j = i;
             NumberedButtons[i].OnInteract += delegate
             {
@@ -82,14 +78,14 @@ public class CrackboxScript : MonoBehaviour
         }
 
         CheckButton.OnInteract += delegate
-        {            
+        {
             Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
             CheckButton.AddInteractionPunch();
             if (isSolved || !interactable)
             {
                 return false;
             }
-            var solved = CrackboxLogic.IsSolved(this.gridItems);
+            var solved = CrackboxLogic.IsSolved(gridItems);
             Debug.LogFormat("[Crackbox #{0}] Submitted:", _moduleId);
             GridDebugLog(gridItems, x => string.Format("{0}", (x.IsBlack ? "B" : (x.Value == 0 ? "*" : x.Value.ToString()))));
             if (solved)
@@ -112,23 +108,23 @@ public class CrackboxScript : MonoBehaviour
         for (int i = 0; i < gridItems.Length; i++)
         {
             var gridItem = gridItems[i];
-            this.BoxTexts[i].text = !gridItem.IsBlack && gridItem.Value != 0 ? gridItem.Value.ToString() : string.Empty;
-            this.BoxRenderers[i].material = gridItem.IsBlack ? GridBoxBlack : GridBoxNormal;
+            BoxTexts[i].text = !gridItem.IsBlack && gridItem.Value != 0 ? gridItem.Value.ToString() : string.Empty;
+            BoxRenderers[i].material = gridItem.IsBlack ? GridBoxBlack : GridBoxNormal;
         }
 
-        this.currentlySelectedItem = UnityEngine.Random.Range(0, gridItems.Length);
-        while (gridItems[this.currentlySelectedItem].IsBlack)
+        currentlySelectedItem = UnityEngine.Random.Range(0, gridItems.Length);
+        while (gridItems[currentlySelectedItem].IsBlack)
         {
-            this.currentlySelectedItem = UnityEngine.Random.Range(0, gridItems.Length);
+            currentlySelectedItem = UnityEngine.Random.Range(0, gridItems.Length);
         }
 
-        this.BoxRenderers[this.currentlySelectedItem].material = GridBoxSelected;
+        BoxRenderers[currentlySelectedItem].material = GridBoxSelected;
     }
 
     // Update is called once per frame
-    void Update ()
-    {    		
-	}
+    void Update()
+    {
+    }
 
     private void InitGrid()
     {
@@ -160,7 +156,7 @@ public class CrackboxScript : MonoBehaviour
 
     private void OnNumberButtonPress(int i)
     {
-        if (gridItems[this.currentlySelectedItem].IsLocked || gridItems[currentlySelectedItem].IsBlack)
+        if (gridItems[currentlySelectedItem].IsLocked || gridItems[currentlySelectedItem].IsBlack)
         {
             return;
         }
@@ -171,7 +167,7 @@ public class CrackboxScript : MonoBehaviour
     private void UpdateGridItem(int value)
     {
         BoxTexts[currentlySelectedItem].text = (value.ToString());
-        gridItems[this.currentlySelectedItem].Value = value;
+        gridItems[currentlySelectedItem].Value = value;
     }
 
     private IEnumerator SolveAnimation(Material material)
@@ -232,66 +228,42 @@ public class CrackboxScript : MonoBehaviour
                 throw new InvalidOperationException();
         }
 
-        var nextButton = CrackboxLogic.GetNextIndex(this.currentlySelectedItem, this.gridItems, direction);
+        var nextButton = CrackboxLogic.GetNextIndex(currentlySelectedItem, gridItems, direction);
 
-        BoxRenderers[this.currentlySelectedItem].material = gridItems[this.currentlySelectedItem].IsBlack ? GridBoxBlack : GridBoxNormal;
+        BoxRenderers[currentlySelectedItem].material = gridItems[currentlySelectedItem].IsBlack ? GridBoxBlack : GridBoxNormal;
         BoxRenderers[nextButton].material = GridBoxSelected;
-        this.currentlySelectedItem = nextButton;
+        currentlySelectedItem = nextButton;
     }
+
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = "!{0} ul 2 d 3 r 4 [move selection box and enter numbers] | !{0} check [submit]";
+#pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand(string command)
     {
-        command = command.ToLowerInvariant().Trim();
-        var setMatch = SetRegEx.Match(command);
-        var moveMatch = MoveRegEx.Match(command);
-        if (setMatch.Success)
-        {
-            yield return null;
-            NumberedButtons[int.Parse(setMatch.Groups[1].Value) - 1].OnInteract();
-            yield break;
-        }
-
-        if (moveMatch.Success)
-        {
-            var moves = moveMatch.Groups[1].Value;
-            foreach(char move in moves)
-            {
-                yield return null;
-                ArrowButtons[MoveCharToInt(move)].OnInteract();
-                yield return new WaitForSeconds(0.2f);
-            }
-            yield break;
-        }
-
-        if (command.Equals("submit") || command.Equals("check"))
+        if (Regex.IsMatch(command, @"^\s*(check|submit|go)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
             CheckButton.OnInteract();
-            if (isSolved)
-            {
-                yield return "solve";
-            }
-            else
-            {
-                yield return "strike";
-            }
+            yield return isSolved ? "solve" : "strike";
             yield break;
         }
-        yield break;
-    }
 
-    private int MoveCharToInt(char c)
-    {
-        switch (c)
+        var match = Regex.Match(command, @"^\s*(?:move|set)?\s*([udlr]|10|[1-9]| +)+\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (!match.Success)
+            yield break;
+
+        var elements = match.Groups[1].Captures.Cast<Capture>().Select(c => c.Value).Where(c => !c.All(ch => ch == ' ')).ToArray();
+        yield return null;
+        yield return elements.Select(el =>
         {
-            case 'u':
-                return 0;
-            case 'l':
-                return 1;
-            case 'r':
-                return 2;
-            default:
-                return 3;
-        }
+            int i;
+            return
+                el == "u" || el == "U" ? ArrowButtons[0] :
+                el == "l" || el == "L" ? ArrowButtons[1] :
+                el == "r" || el == "R" ? ArrowButtons[2] :
+                el == "d" || el == "D" ? ArrowButtons[3] :
+                int.TryParse(el, out i) ? NumberedButtons[i - 1] : null;
+        });
     }
 }
