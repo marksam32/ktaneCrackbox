@@ -24,8 +24,6 @@ public class CrackboxScript : MonoBehaviour
     private static int _moduleIdCounter = 1;
     private int _moduleId;
     private bool isSolved = false;
-    private static readonly Regex SetRegEx = new Regex("^set ([1-9]|10)$");
-    private static readonly Regex MoveRegEx = new Regex("^move ([u|d|l|r]+)$");
 
     private int currentlySelectedItem;
     private bool interactable = true;
