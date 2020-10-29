@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Crackbox;
@@ -30,6 +31,9 @@ public class CrackboxScript : MonoBehaviour
 
     private CrackboxGridItem[] gridItems;
     private CrackboxGridItem[] originalGridItems;
+    private CrackboxGridItem[] solution;
+
+    private short pointerLocation = 0;
 
     // Use this for initialization
     void Start()
@@ -54,6 +58,7 @@ public class CrackboxScript : MonoBehaviour
                 {
                     return false;
                 }
+
                 OnArrowPress(j);
                 return false;
             };
@@ -70,6 +75,7 @@ public class CrackboxScript : MonoBehaviour
                 {
                     return false;
                 }
+
                 OnNumberButtonPress(j);
                 return false;
             };
@@ -83,9 +89,11 @@ public class CrackboxScript : MonoBehaviour
             {
                 return false;
             }
+
             var solved = CrackboxLogic.IsSolved(gridItems);
             Debug.LogFormat("[Crackbox #{0}] Submitted:", _moduleId);
-            GridDebugLog(gridItems, x => string.Format("{0}", (x.IsBlack ? "B" : (x.Value == 0 ? "*" : x.Value.ToString()))));
+            GridDebugLog(gridItems,
+                x => string.Format("{0}", (x.IsBlack ? "B" : (x.Value == 0 ? "*" : x.Value.ToString()))));
             if (solved)
             {
                 isSolved = true;
@@ -97,6 +105,7 @@ public class CrackboxScript : MonoBehaviour
                 Debug.LogFormat("[Crackbox #{0}] That is incorrect, strike!", _moduleId);
                 StartCoroutine("SolveAnimation", GridBoxWrong);
             }
+
             return false;
         };
     }
@@ -136,11 +145,14 @@ public class CrackboxScript : MonoBehaviour
         Debug.LogFormat("[Crackbox #{0}] One possible solution:", _moduleId);
         GridDebugLog(originalGridItems, x => string.Format("{0}", (x.IsBlack ? "B" : x.Value.ToString())));
 
+        solution = CrackboxGridItem.Clone(originalGridItems);
+
         CrackboxSolutionFinder.Anonymize(originalGridItems);
         gridItems = CrackboxGridItem.Clone(originalGridItems);
 
         Debug.LogFormat("[Crackbox #{0}] Initial grid:", _moduleId);
-        GridDebugLog(originalGridItems, x => string.Format("{0}", (x.IsBlack ? "B" : (x.Value == 0 ? "*" : x.Value.ToString()))));
+        GridDebugLog(originalGridItems,
+            x => string.Format("{0}", (x.IsBlack ? "B" : (x.Value == 0 ? "*" : x.Value.ToString()))));
     }
 
     private void GridDebugLog(CrackboxGridItem[] items, Func<CrackboxGridItem, string> func)
@@ -202,7 +214,6 @@ public class CrackboxScript : MonoBehaviour
             ReinitializeGrid();
             interactable = true;
         }
-
     }
 
     private void OnArrowPress(int i)
@@ -228,18 +239,21 @@ public class CrackboxScript : MonoBehaviour
 
         var nextButton = CrackboxLogic.GetNextIndex(currentlySelectedItem, gridItems, direction);
 
-        BoxRenderers[currentlySelectedItem].material = gridItems[currentlySelectedItem].IsBlack ? GridBoxBlack : GridBoxNormal;
+        BoxRenderers[currentlySelectedItem].material =
+            gridItems[currentlySelectedItem].IsBlack ? GridBoxBlack : GridBoxNormal;
         BoxRenderers[nextButton].material = GridBoxSelected;
         currentlySelectedItem = nextButton;
     }
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = "!{0} ul 2 d 3 r 4 [move selection box and enter numbers] | !{0} check [submit]";
+    private readonly string TwitchHelpMessage =
+        "!{0} ul 2 d 3 r 4 [move selection box and enter numbers] | !{0} check [submit]";
 #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand(string command)
     {
-        if (Regex.IsMatch(command, @"^\s*(check|submit|go)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        if (Regex.IsMatch(command, @"^\s*(check|submit|go)\s*$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
             CheckButton.OnInteract();
@@ -247,11 +261,13 @@ public class CrackboxScript : MonoBehaviour
             yield break;
         }
 
-        var match = Regex.Match(command, @"^\s*(?:move|set)?\s*([udlr]|10|[1-9]| +)+\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var match = Regex.Match(command, @"^\s*(?:move|set)?\s*([udlr]|10|[1-9]| +)+\s*$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (!match.Success)
             yield break;
 
-        var elements = match.Groups[1].Captures.Cast<Capture>().Select(c => c.Value).Where(c => !c.All(ch => ch == ' ')).ToArray();
+        var elements = match.Groups[1].Captures.Cast<Capture>().Select(c => c.Value).Where(c => !c.All(ch => ch == ' '))
+            .ToArray();
         yield return null;
         yield return elements.Select(el =>
         {
@@ -263,5 +279,91 @@ public class CrackboxScript : MonoBehaviour
                 el == "d" || el == "D" ? ArrowButtons[3] :
                 int.TryParse(el, out i) ? NumberedButtons[i - 1] : null;
         });
+    }
+
+    private bool checkForEmpty(ref List<int> posushons)
+    {
+        for (var i = 0; i < 4; ++i)
+        {
+            if (!(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsLocked ||
+                  originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsBlack || posushons.Contains(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index)))
+            {
+                posushons.Add(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void getRandomPosition(ref List<int> posushuns)
+    {
+        for(var i = 0; i < 16; ++i) {
+            if (posushuns.Contains(i)) continue;
+            if (originalGridItems[i].IsBlack || originalGridItems[i].IsLocked) continue;
+            posushuns.Add(i);
+            break;
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        var pos = new List<int> { };
+        var up = currentlySelectedItem / 4;
+        var left = currentlySelectedItem % 4;
+        
+        for (var i = 0; i < 8; ++i)
+        {
+            if(!checkForEmpty(ref pos)) getRandomPosition(ref pos);
+        }
+        Debug.Log(pos.Join(", "));
+
+        
+
+        foreach (var k in pos)
+        {
+            var ynew = k / 4;
+            var yold = currentlySelectedItem / 4;
+            var xnew = k % 4;
+            var xold = currentlySelectedItem % 4;
+            if (ynew < yold)
+            {
+                while (ynew != currentlySelectedItem / 4)
+                {
+                    ArrowButtons[0].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (ynew > yold)
+            {
+                while (ynew != currentlySelectedItem / 4)
+                {
+                    ArrowButtons[3].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            if (xnew < xold)
+            {
+                while (xnew != currentlySelectedItem % 4)
+                {
+                    ArrowButtons[1].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (xnew > xold)
+            {
+                while (xnew != currentlySelectedItem % 4)
+                {
+                    ArrowButtons[2].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            if (!solution[k].IsBlack && !solution[k].IsLocked)
+                NumberedButtons[solution[k].Value - 1].OnInteract();
+            yield return new WaitForSeconds(0.15f);
+        }
+
+        CheckButton.OnInteract();
+        yield return true;
     }
 }
