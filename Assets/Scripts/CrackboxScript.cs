@@ -311,25 +311,7 @@ public class CrackboxScript : MonoBehaviour
         var pos = new List<int> { };
         var up = currentlySelectedItem / 4;
         var left = currentlySelectedItem % 4;
-
-        /*if (up != 0)
-        {
-            for (var i = 0; i < up; ++i)
-            {
-                ArrowButtons[0].OnInteract();
-                yield return new WaitForSeconds(0.25f);
-            }
-        }
         
-        if (left != 0)
-        {
-            for (var i = 0; i < left; ++i)
-            {
-                ArrowButtons[1].OnInteract();
-                yield return new WaitForSeconds(0.25f);
-            }
-        }*/
-
         for (var i = 0; i < 8; ++i)
         {
             if(!checkForEmpty(ref pos)) getRandomPosition(ref pos);
