@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Crackbox
 {
@@ -27,14 +28,14 @@ namespace Crackbox
         public int Value { get; set; }
         public bool IsLocked { get; set; }
         
-        public int[] Neighbours { get; set; }
+        public List<int> Neighbours { get; set; }
 
         public static CrackboxGridItem[] Clone(CrackboxGridItem[] crackboxGridItems)
         {
             return crackboxGridItems.Select(item => new CrackboxGridItem(item)).ToArray();
         }
 
-        public static CrackboxGridItem Create(int index, int dn, int un, int ln, int rn, int[] neighbours)
+        public static CrackboxGridItem Create(int index, int dn, int un, int ln, int rn, List<int> neighbours)
         {
             return new CrackboxGridItem
             {
