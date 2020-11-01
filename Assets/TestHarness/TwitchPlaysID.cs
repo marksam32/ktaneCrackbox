@@ -1014,7 +1014,7 @@ public class TwitchPlaysID : MonoBehaviour
 		Match match;
 		float messageDelayTime;
 		// Within the messages, allow variables:
-		// {0} = user’s nickname
+		// {0} = userâ€™s nickname
 		// {1} = Code (module number)
 		if (message.RegexMatch(out match, @"^senddelayedmessage ([0-9]+(?:\.[0-9])?) (\S(?:\S|\s)*)$") && float.TryParse(match.Groups[1].Value, out messageDelayTime))
 		{

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Crackbox
 {
-    public class CrackboxLogic
+    public static class CrackboxLogic
     {
         public static IList<CrackboxGridItem> CreateGrid()
         {
@@ -31,7 +31,7 @@ namespace Crackbox
 
         public static int GetNextIndex(int currentIndex, CrackboxGridItem[] gridItems, ArrowButtonDirection direction)
         {
-            int neighbour = 0;
+            var neighbour = 0;
 
             if (currentIndex < 0 || currentIndex + 1 > gridItems.Length)
             {
@@ -75,19 +75,19 @@ namespace Crackbox
 
             var noValues = array.Where(x => x.Value != 0).Select(x => x.Value).ToList();
             
-            if (noValues.Count() != 10)
+            if (noValues.Count != 10)
             {
                 // All values not placed.
                 return false;
             }
 
-            if (noValues.Count() != noValues.Distinct().Count())
+            if (noValues.Count != noValues.Distinct().Count())
             {
                 // Duplicate values placed.
                 return false;
             }
 
-            for (int i = 0; i < array.Count(); ++i)
+            for (int i = 0; i < array.Length; ++i)
             {
                 var item = items[i];
 
@@ -95,9 +95,9 @@ namespace Crackbox
                 {
                     var value = item.Value;
                     var neighbours = item.Neighbours.Where(x => x > i).ToArray();
-                    for (var j = 0; j < neighbours.Count(); ++j)
+                    foreach (var t in neighbours)
                     {
-                        var nv = array[neighbours[j]];
+                        var nv = array[t];
                         if (nv.IsBlack)
                         {
                             // Don't care about black squares.

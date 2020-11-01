@@ -6,7 +6,7 @@ namespace Crackbox
     public class CrackboxGridItem
     {
         private CrackboxGridItem() { }
-        public CrackboxGridItem(CrackboxGridItem item)
+        private CrackboxGridItem(CrackboxGridItem item)
         {
             Index = item.Index;
             UpNeighbour = item.UpNeighbour;
@@ -19,16 +19,16 @@ namespace Crackbox
             Neighbours = item.Neighbours;
         }
 
-        public int Index { get; set; }
-        public int UpNeighbour { get; set; }
-        public int DownNeighbour { get; set; }
-        public int LeftNeighbour { get; set; }
-        public int RightNeighbour { get; set; }
+        public int Index { get; private set; }
+        public int UpNeighbour { get; private set; }
+        public int DownNeighbour { get; private set; }
+        public int LeftNeighbour { get; private set; }
+        public int RightNeighbour { get; private set; }
         public bool IsBlack { get; set; }
         public int Value { get; set; }
         public bool IsLocked { get; set; }
         
-        public List<int> Neighbours { get; set; }
+        public List<int> Neighbours { get; private set; }
 
         public static CrackboxGridItem[] Clone(CrackboxGridItem[] crackboxGridItems)
         {

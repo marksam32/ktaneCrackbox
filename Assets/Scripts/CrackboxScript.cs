@@ -24,7 +24,8 @@ public class CrackboxScript : MonoBehaviour
 
     private static int _moduleIdCounter = 1;
     private int _moduleId;
-    private bool isSolved = false;
+    private bool isSolved;
+    private bool solveAnimationDone;
 
     private int currentlySelectedItem;
     private bool interactable = true;
@@ -32,8 +33,6 @@ public class CrackboxScript : MonoBehaviour
     private CrackboxGridItem[] gridItems;
     private CrackboxGridItem[] originalGridItems;
     private CrackboxGridItem[] solution;
-
-    private short pointerLocation = 0;
 
     // Use this for initialization
     void Start()
@@ -127,12 +126,7 @@ public class CrackboxScript : MonoBehaviour
 
         BoxRenderers[currentlySelectedItem].material = GridBoxSelected;
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-    }
-
+    
     private void InitGrid()
     {
         originalGridItems = null;
@@ -157,7 +151,7 @@ public class CrackboxScript : MonoBehaviour
 
     private void GridDebugLog(CrackboxGridItem[] items, Func<CrackboxGridItem, string> func)
     {
-        for (var rowNumber = 0; rowNumber < items.Count() / 4; ++rowNumber)
+        for (var rowNumber = 0; rowNumber < items.Length / 4; ++rowNumber)
         {
             var row = items.Skip(rowNumber * 4).Take(4);
             Debug.LogFormat("[Crackbox #{0}] {1}", _moduleId, string.Join(", ", row.Select(func).ToArray()));
@@ -205,6 +199,7 @@ public class CrackboxScript : MonoBehaviour
             Module.HandlePass();
             Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
             interactable = true;
+            solveAnimationDone = true;
         }
         else
         {
@@ -218,7 +213,7 @@ public class CrackboxScript : MonoBehaviour
 
     private void OnArrowPress(int i)
     {
-        ArrowButtonDirection direction = ArrowButtonDirection.Up;
+        ArrowButtonDirection direction;
         switch (i)
         {
             case 0:
@@ -266,7 +261,7 @@ public class CrackboxScript : MonoBehaviour
         if (!match.Success)
             yield break;
 
-        var elements = match.Groups[1].Captures.Cast<Capture>().Select(c => c.Value).Where(c => !c.All(ch => ch == ' '))
+        var elements = match.Groups[1].Captures.Cast<Capture>().Select(c => c.Value).Where(c => c.Any(ch => ch != ' '))
             .ToArray();
         yield return null;
         yield return elements.Select(el =>
@@ -281,89 +276,79 @@ public class CrackboxScript : MonoBehaviour
         });
     }
 
-    private bool checkForEmpty(ref List<int> posushons)
+    private bool CheckForEmpty(ref List<int> positions)
     {
         for (var i = 0; i < 4; ++i)
         {
-            if (!(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsLocked ||
-                  originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsBlack || posushons.Contains(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index)))
+            if (i == 3 && originalGridItems[currentlySelectedItem].Neighbours.Count < 4)
             {
-                posushons.Add(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index);
-                return true;
+                continue;
             }
+            if (!(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsLocked ||
+                  originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].IsBlack ||
+                  positions.Contains(
+                      originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index)))
+                {
+                    positions.Add(originalGridItems[originalGridItems[currentlySelectedItem].Neighbours[i]].Index);
+                    return true;
+                }
         }
 
         return false;
     }
 
-    private void getRandomPosition(ref List<int> posushuns)
+    private void GetRandomPosition(ref List<int> positions)
     {
         for(var i = 0; i < 16; ++i) {
-            if (posushuns.Contains(i)) continue;
-            if (originalGridItems[i].IsBlack || originalGridItems[i].IsLocked) continue;
-            posushuns.Add(i);
+            if (originalGridItems[i].IsBlack || originalGridItems[i].IsLocked || positions.Contains(i)) continue;
+            positions.Add(i);
             break;
         }
     }
 
-    IEnumerator TwitchHandleForcedSolve()
+    private IEnumerator TwitchHandleForcedSolve()
     {
-        var pos = new List<int> { };
-        var up = currentlySelectedItem / 4;
-        var left = currentlySelectedItem % 4;
-        
+        var pos = new List<int>();
+
         for (var i = 0; i < 8; ++i)
         {
-            if(!checkForEmpty(ref pos)) getRandomPosition(ref pos);
+            if(!CheckForEmpty(ref pos)) GetRandomPosition(ref pos);
         }
-        Debug.Log(pos.Join(", "));
-
         
-
         foreach (var k in pos)
         {
             var ynew = k / 4;
             var yold = currentlySelectedItem / 4;
             var xnew = k % 4;
             var xold = currentlySelectedItem % 4;
-            if (ynew < yold)
+            
+            if (ynew != yold)
             {
                 while (ynew != currentlySelectedItem / 4)
                 {
-                    ArrowButtons[0].OnInteract();
+                    ArrowButtons[ynew > yold ? 3 : 0].OnInteract();
                     yield return new WaitForSeconds(0.1f);
                 }
             }
-            else if (ynew > yold)
-            {
-                while (ynew != currentlySelectedItem / 4)
-                {
-                    ArrowButtons[3].OnInteract();
-                    yield return new WaitForSeconds(0.1f);
-                }
-            }
-            if (xnew < xold)
+            
+            if (xnew != xold)
             {
                 while (xnew != currentlySelectedItem % 4)
                 {
-                    ArrowButtons[1].OnInteract();
+                    ArrowButtons[xnew < xold ? 1 : 2].OnInteract();
                     yield return new WaitForSeconds(0.1f);
                 }
             }
-            else if (xnew > xold)
-            {
-                while (xnew != currentlySelectedItem % 4)
-                {
-                    ArrowButtons[2].OnInteract();
-                    yield return new WaitForSeconds(0.1f);
-                }
-            }
+            
             if (!solution[k].IsBlack && !solution[k].IsLocked)
                 NumberedButtons[solution[k].Value - 1].OnInteract();
             yield return new WaitForSeconds(0.15f);
         }
 
         CheckButton.OnInteract();
-        yield return true;
+        while (!solveAnimationDone)
+        {
+            yield return true;
+        }
     }
 }
