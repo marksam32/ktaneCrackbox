@@ -10,12 +10,12 @@ namespace Crackbox
             return available.Where(x => AreAdjacent(x, number) || AreBothOddOrEven(x, number)).ToArray();
         }
 
-        public static bool IsEven(int value)
+        private static bool IsEven(int value)
         {
             return value % 2 == 0;
         }
 
-        public static bool IsOdd(int value)
+        private static bool IsOdd(int value)
         {
             return !IsEven(value);
         }
